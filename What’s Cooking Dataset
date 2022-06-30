@@ -1,0 +1,65 @@
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import  accuracy_score
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import CountVectorizer
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+# from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.naive_bayes import MultinomialNB
+# from sklearn.naive_bayes import GaussianNB
+
+dt = DecisionTreeClassifier(random_state=0)
+rf = RandomForestClassifier(random_state=1)
+# gbm = GradientBoostingClassifier(n_estimators=10)
+nbm = MultinomialNB()
+# nbg = GaussianNB()
+
+df = pd.read_json("whats_cooking.json")
+print("Dataset:\n",df.head())
+df_cuisine= list(df['cuisine'].unique())
+# print(df_cuisine.index)
+
+x=df['ingredients']
+y = df['cuisine'].apply(df_cuisine.index)
+
+df['all_ingredients'] = df['ingredients'].map(";".join)
+# print(df['all_ingredients'])
+
+cv = CountVectorizer()
+x = cv.fit_transform(df['all_ingredients'].values)
+# print(x)
+
+#Traning and Testing:
+x_train,x_test,y_train,y_test= train_test_split(x,y,random_state=0,test_size=0.3)
+
+print("\nAlgorithm \t\t\t\t\tAccuracy")
+dt.fit(x_train,y_train)
+y_predDT=dt.predict(x_test)
+print("Decision Tree \t\t\t\t",accuracy_score(y_test,y_predDT))
+
+rf.fit(x_train,y_train)
+y_predRF=rf.predict(x_test)
+print("Random Forest: \t\t\t\t",accuracy_score(y_test,y_predRF))
+
+nbm.fit(x_train,y_train)
+y_predNBM=nbm.predict(x_test)
+print("Naive Bayes by MultinomialNB",accuracy_score(y_test,y_predNBM))
+
+# ---------------------OUTPUT---------------------------
+'''
+Dataset:
+      id      cuisine                                        ingredients
+0  10259        greek  [romaine lettuce, black olives, grape tomatoes...
+1  25693  southern_us  [plain flour, ground pepper, salt, tomatoes, g...
+2  20130     filipino  [eggs, pepper, salt, mayonaise, cooking oil, g...
+3  22213       indian                [water, vegetable oil, wheat, salt]
+4  13162       indian  [black pepper, shallots, cornflour, cayenne pe...
+
+Algorithm 					Accuracy
+Decision Tree 				 0.6307718092684154
+Random Forest: 				 0.7531215955752953
+Naive Bayes by MultinomialNB 0.730160060336881
+
+'''
