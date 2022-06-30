@@ -1,0 +1,89 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+lr = LinearRegression()
+
+df = pd.read_csv("Boston.csv")
+print(df.head(10))
+
+#Missing values
+print("Checking for Missing values in dataset: \n",df.isnull().sum())
+
+#spliting x and y values
+x = df.drop('medv',axis=1)
+y = df['medv']
+
+#Feature Selection
+from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+
+model = ExtraTreesClassifier()
+
+le = LabelEncoder()
+le.fit(y)
+y = le.transform(y)
+
+model.fit(x,y)
+print("Feature Importance:\n",x.columns,"\n",model.feature_importances_)
+
+feat_imp = pd.Series(model.feature_importances_,index=x.columns)
+feat_imp.nlargest(4).plot(kind='barh')
+plt.show()
+
+
+#Traning and Testing
+x = pd.DataFrame(np.c_[df['lstat'],df['rm']],columns=['nox','rm'])
+y = df['medv']
+x_train,x_test,y_train,y_test= train_test_split(x,y,random_state=0,test_size=0.3)
+lr.fit(x_train,y_train)
+
+#Prediction and Error
+y_pred = lr.predict(x_test)
+er = mean_squared_error(y_test,y_pred,squared=False)
+print("Mean Square Error:",er)
+
+# ------------------------------OUTPUT---------------------
+'''
+   Unnamed: 0     crim    zn  indus  chas  ...  tax  ptratio   black  lstat  medv
+0           1  0.00632  18.0   2.31     0  ...  296     15.3  396.90   4.98  24.0
+1           2  0.02731   0.0   7.07     0  ...  242     17.8  396.90   9.14  21.6
+2           3  0.02729   0.0   7.07     0  ...  242     17.8  392.83   4.03  34.7
+3           4  0.03237   0.0   2.18     0  ...  222     18.7  394.63   2.94  33.4
+4           5  0.06905   0.0   2.18     0  ...  222     18.7  396.90   5.33  36.2
+5           6  0.02985   0.0   2.18     0  ...  222     18.7  394.12   5.21  28.7
+6           7  0.08829  12.5   7.87     0  ...  311     15.2  395.60  12.43  22.9
+7           8  0.14455  12.5   7.87     0  ...  311     15.2  396.90  19.15  27.1
+8           9  0.21124  12.5   7.87     0  ...  311     15.2  386.63  29.93  16.5
+9          10  0.17004  12.5   7.87     0  ...  311     15.2  386.71  17.10  18.9
+
+[10 rows x 15 columns]
+Checking for Missing values in dataset:  
+Unnamed: 0    0
+crim          0
+zn            0
+indus         0
+chas          0
+nox           0
+rm            0
+age           0
+dis           0
+rad           0
+tax           0
+ptratio       0
+black         0
+lstat         0
+medv          0
+dtype: int64
+Feature Importance:
+ Index(['Unnamed: 0', 'crim', 'zn', 'indus', 'chas', 'nox', 'rm', 'age', 'dis',
+       'rad', 'tax', 'ptratio', 'black', 'lstat'],
+      dtype='object') 
+ [0.11023783 0.11284145 0.02120396 0.03417244 0.00943052 0.0599537
+ 0.12121005 0.10855472 0.10496636 0.03050361 0.03484996 0.03387466
+ 0.10217071 0.11603005]
+Mean Square Error: 5.72058316020447
+'''
