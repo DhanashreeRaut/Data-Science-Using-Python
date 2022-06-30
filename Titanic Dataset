@@ -1,0 +1,104 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB
+
+dt = DecisionTreeClassifier(random_state=0)
+rf = RandomForestClassifier(random_state=1)
+gbm = GradientBoostingClassifier(n_estimators=10)
+nbm = MultinomialNB()
+nbg = GaussianNB()
+
+df = pd.read_csv("Titanic.csv")
+print("Dataset: Titanic\n",df.head(),end="\n-----------------------------------------------\n")
+
+#Dealing with Missing values
+# print("Missing values in dataset: \n",df.isnull().sum(),end="\n---------------------------\n")
+df['Age'] = df['Age'].fillna((df['Age'].mean()))
+df['Fare'] = df['Fare'].fillna((df['Fare'].mean()))
+
+# x and y values
+drop_list = ['PassengerId','Name','Ticket','Embarked']
+x = df.drop(drop_list,axis=1)
+y = df['Embarked']
+# print("X, Y values-------\n",x,y)
+
+# Encoding Features
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+
+x['Sex'] = le.fit_transform(x['Sex'])
+x['Cabin'] = le.fit_transform(x['Cabin'])
+y =le.fit_transform(y)
+# print(x,y)
+
+# feature selection
+from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
+
+model = ExtraTreesClassifier()
+
+model.fit(x,y)
+print("Feature Importance:\n",x.columns,"\n",model.feature_importances_)
+
+feat_imp = pd.Series(model.feature_importances_,index=x.columns)
+feat_imp.nlargest(4).plot(kind='barh')
+plt.show()
+
+
+# Traning and Testing Of dataset
+x = pd.DataFrame(np.c_[df['Age'],df['Fare']],columns=['Age','Fare'])
+x_train,x_test,y_train,y_test= train_test_split(x,y,random_state=0,test_size=0.3)
+
+# Predection and Error
+print("\nAlgorithm \t\t\t\t\tMean Square Error")
+dt.fit(x_train,y_train)
+y_predDT=dt.predict(x_test)
+print("Decision Tree \t\t\t\t",mean_squared_error(y_test,y_predDT))
+
+rf.fit(x_train,y_train)
+y_predRF=rf.predict(x_test)
+print("Random Forest\t\t\t\t",mean_squared_error(y_test,y_predRF))
+
+gbm.fit(x_train,y_train)
+y_predGBM=gbm.predict(x_test)
+print("Gradient Boosting\t\t\t",mean_squared_error(y_test,y_predGBM))
+
+nbm.fit(x_train,y_train)
+y_predNBM=nbm.predict(x_test)
+print("Naive Bayes by MultinomialNB",mean_squared_error(y_test,y_predNBM))
+
+nbg.fit(x_train,y_train)
+y_predNBG=nbg.predict(x_test)
+print("Naive Bayes by GaussianNB\t",mean_squared_error(y_test,y_predNBG))
+
+# ---------------------------------OUTPUT----------------------------
+'''
+Dataset: Titanic
+    PassengerId  Survived  Pclass  ...     Fare Cabin  Embarked
+0          892         0       3  ...   7.8292   NaN         Q
+1          893         1       3  ...   7.0000   NaN         S
+2          894         0       2  ...   9.6875   NaN         Q
+3          895         0       3  ...   8.6625   NaN         S
+4          896         1       3  ...  12.2875   NaN         S
+
+[5 rows x 12 columns]
+-----------------------------------------------
+Feature Importance:
+ Index(['Survived', 'Pclass', 'Sex', 'Age', 'SibSp', 'Parch', 'Fare', 'Cabin'], dtype='object') 
+ [0.01202726 0.07808334 0.01120393 0.22899529 0.06600294 0.0554873
+ 0.45074165 0.0974583 ]
+
+Algorithm 					Mean Square Error
+Decision Tree 				 0.6031746031746031
+Random Forest				 0.8333333333333334
+Gradient Boosting			 0.8809523809523809
+Naive Bayes by MultinomialNB 1.2777777777777777
+Naive Bayes by GaussianNB	 1.0317460317460319
+'''
