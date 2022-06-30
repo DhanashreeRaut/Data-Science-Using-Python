@@ -1,0 +1,95 @@
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_squared_error
+
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.naive_bayes import MultinomialNB
+from sklearn.naive_bayes import GaussianNB
+
+dt = DecisionTreeClassifier(random_state=0)
+rf = RandomForestClassifier(random_state=1)
+gbm = GradientBoostingClassifier(n_estimators=10)
+nbm = MultinomialNB()
+nbg = GaussianNB()
+
+df = pd.read_csv("WineQT.csv")
+print("Dataset: Wine Quality \n",df.head(),end="\n-----------------------------------------------\n")
+
+# Dealing with Missing values
+# print("Checking for Missing values in dataset: \n",df.isnull().sum(),end="\n---------------------------\n")
+
+#x and y values
+x = df.drop("quality",axis=1)
+y = df['quality']
+# print("X, Y values-------\n",x.head(),y.head())
+
+#feature selection
+from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
+
+model = ExtraTreesClassifier()
+
+model.fit(x,y)
+print("Feature Importance:\n",x.columns,"\n",model.feature_importances_)
+
+feat_imp = pd.Series(model.feature_importances_,index=x.columns)
+feat_imp.nlargest(4).plot(kind='barh')
+plt.show()
+
+
+#Traning and Testing Of dataset
+x = pd.DataFrame(np.c_[df['sulphates'],df['alcohol']],columns=['sulphates','alcohol'])
+x_train,x_test,y_train,y_test= train_test_split(x,y,random_state=0,test_size=0.3)
+
+# Predection and Error
+print("\nAlgrothim \t\t\t\t\tMean Square Error")
+dt.fit(x_train,y_train)
+y_predDT=dt.predict(x_test)
+print("Decision Tree \t\t\t\t",mean_squared_error(y_test,y_predDT))
+
+rf.fit(x_train,y_train)
+y_predRF=rf.predict(x_test)
+print("Random Forest\t\t\t\t",mean_squared_error(y_test,y_predRF))
+
+gbm.fit(x_train,y_train)
+y_predGBM=gbm.predict(x_test)
+print("Gradient Boosting\t\t\t",mean_squared_error(y_test,y_predGBM))
+
+nbm.fit(x_train,y_train)
+y_predNBM=nbm.predict(x_test)
+print("Naive Bayes by MultinomialNB",mean_squared_error(y_test,y_predNBM))
+
+nbg.fit(x_train,y_train)
+y_predNBG=nbg.predict(x_test)
+print("Naive Bayes by GaussianNB\t",mean_squared_error(y_test,y_predNBG),)
+
+# -------------------------------------OUTPUT----------------------------
+'''
+Dataset: Wine Quality 
+    fixed acidity  volatile acidity  citric acid  ...  alcohol  quality  Id
+0            7.4              0.70         0.00  ...      9.4        5   0
+1            7.8              0.88         0.00  ...      9.8        5   1
+2            7.8              0.76         0.04  ...      9.8        5   2
+3           11.2              0.28         0.56  ...      9.8        6   3
+4            7.4              0.70         0.00  ...      9.4        5   4
+
+[5 rows x 13 columns]
+-----------------------------------------------
+Feature Importance:
+ Index(['fixed acidity', 'volatile acidity', 'citric acid', 'residual sugar',
+       'chlorides', 'free sulfur dioxide', 'total sulfur dioxide', 'density',
+       'pH', 'sulphates', 'alcohol', 'Id'],
+      dtype='object') 
+ [0.07115167 0.09248981 0.07713569 0.06954728 0.07028758 0.06663854
+ 0.0901653  0.07682096 0.07160066 0.10218124 0.13530313 0.07667815]
+
+Algorithm 					Mean Square Error
+Decision Tree 				 0.760932944606414
+Random Forest				 0.6122448979591837
+Gradient Boosting			 0.5685131195335277
+Naive Bayes by MultinomialNB 1.0116618075801749
+Naive Bayes by GaussianNB	 0.5043731778425656
+'''
