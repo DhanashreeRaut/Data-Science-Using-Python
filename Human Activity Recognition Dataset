@@ -1,0 +1,69 @@
+import pandas as pd
+import numpy as np
+from sklearn.linear_model import LinearRegression
+from sklearn.model_selection import train_test_split
+from  sklearn.metrics import accuracy_score,mean_squared_error
+
+df = pd.read_csv("dataset/Human Activity Recognition/train.csv")
+df_test = pd.read_csv("dataset/Human Activity Recognition/test.csv")
+print(df.head())
+print(df.info())
+
+
+x=df.iloc[:,:-1]
+y=df.iloc[:,-1]
+
+x_test=df.iloc[:,:-1]
+y_test=df.iloc[:,-1]
+# print(x,y)
+
+#encoding
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+y = le.fit_transform(y)
+y_test = le.fit_transform(y_test)
+
+# Feature selection
+from sklearn.ensemble import ExtraTreesClassifier
+import matplotlib.pyplot as plt
+
+model = ExtraTreesClassifier()
+
+model.fit(x,y)
+# print("Feature Importance:\n",x.columns,"\n",model.feature_importances_)
+
+feat_imp = pd.Series(model.feature_importances_,index=x.columns)
+feat_imp.nlargest(4).plot(kind='barh')
+print("4 Important Features: ",feat_imp.nlargest(4).index)
+plt.show()
+
+#Appling Algo
+logr=LinearRegression()
+
+x_train,x_test,y_train,y_test=train_test_split(x,y,random_state=0,test_size=0.3)
+
+logr.fit(x,y)
+y_pred=logr.predict(x_test)
+print("Linear Regression (Maan Square error)",mean_squared_error(y_test,y_pred))
+
+# --------------------------OUTPUT---------------------------
+'''
+   tBodyAcc-mean()-X  tBodyAcc-mean()-Y  ...  subject  Activity
+0           0.288585          -0.020294  ...        1  STANDING
+1           0.278419          -0.016411  ...        1  STANDING
+2           0.279653          -0.019467  ...        1  STANDING
+3           0.279174          -0.026201  ...        1  STANDING
+4           0.276629          -0.016570  ...        1  STANDING
+
+[5 rows x 563 columns]
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 7352 entries, 0 to 7351
+Columns: 563 entries, tBodyAcc-mean()-X to Activity
+dtypes: float64(561), int64(1), object(1)
+memory usage: 31.6+ MB
+None
+4 Important Features:  Index(['tGravityAcc-energy()-X', 'tGravityAcc-min()-X', 'tGravityAcc-mean()-X',
+       'tGravityAcc-mean()-Y'],
+      dtype='object')
+Linear Regression (Maan Square error) 0.07638886527993902
+'''
