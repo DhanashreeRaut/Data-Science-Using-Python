@@ -1,0 +1,128 @@
+import numpy as np
+import pandas as pd
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import train_test_split
+from  sklearn.metrics import accuracy_score
+
+#Reading csv file
+df = pd.read_csv("dataset/Census Income adult.csv")
+print("Dataset:\n",df.head())
+
+#Analysing Data
+print("\nDataset Information:")
+print(df.info())
+
+#replacing some special character columns names with proper names
+df.rename(columns={'capital.gain': 'capital gain', 'capital.loss': 'capital loss', 'native.country': 'country','hours.per.week': 'hours per week','marital.status': 'marital'}, inplace=True)
+
+#Data Cleaning (Dealing with Missing values (?/NA/NAN))
+print("\n'?' Values details:\n",df.isin(['?']).sum(axis=0))
+df['country'] = df['country'].replace('?',np.nan)
+df['workclass'] = df['workclass'].replace('?',np.nan)
+df['occupation'] = df['occupation'].replace('?',np.nan)
+
+df.dropna(how='any',inplace=True)
+
+#Feature Engineering
+df.drop(['education.num','age', 'hours per week', 'fnlwgt', 'capital gain','capital loss', 'country'], axis=1, inplace=True)
+
+# Encoding
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+
+encodelist = ['income','occupation']
+df['income'] = le.fit_transform(df['income'])
+df['occupation'] = le.fit_transform(df['occupation'])
+df['relationship'] = le.fit_transform(df['relationship'])
+df['education'] = le.fit_transform(df['education'])
+df['race'] = le.fit_transform(df['race'])
+df['workclass'] = le.fit_transform(df['workclass'])
+df['marital'] = le.fit_transform(df['marital'])
+df['sex'] = le.fit_transform(df['sex'])
+print("\nEncoded Data\n",df)
+
+
+# x and y values
+x = pd.DataFrame(np.c_[df['relationship'], df['education'], df['race'],df['occupation'],df['sex'],df['marital'],df['workclass']], columns = ['relationship','education','race','occupation','sex','marital','workclass'])
+y = df['income']
+
+#traning and testing
+logr = LogisticRegression()
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+logr.fit(x_train,y_train)
+y_predLR=logr.predict(x_test)
+print("Logistic Regression",accuracy_score(y_test,y_predLR))
+
+#-------------------------OUTPUT-----------------------------
+'''
+Dataset:
+    age workclass  fnlwgt  ... hours.per.week  native.country income
+0   90         ?   77053  ...             40   United-States  <=50K
+1   82   Private  132870  ...             18   United-States  <=50K
+2   66         ?  186061  ...             40   United-States  <=50K
+3   54   Private  140359  ...             40   United-States  <=50K
+4   41   Private  264663  ...             40   United-States  <=50K
+
+[5 rows x 15 columns]
+
+Dataset Information:
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 32561 entries, 0 to 32560
+Data columns (total 15 columns):
+ #   Column          Non-Null Count  Dtype 
+---  ------          --------------  ----- 
+ 0   age             32561 non-null  int64 
+ 1   workclass       32561 non-null  object
+ 2   fnlwgt          32561 non-null  int64 
+ 3   education       32561 non-null  object
+ 4   education.num   32561 non-null  int64 
+ 5   marital.status  32561 non-null  object
+ 6   occupation      32561 non-null  object
+ 7   relationship    32561 non-null  object
+ 8   race            32561 non-null  object
+ 9   sex             32561 non-null  object
+ 10  capital.gain    32561 non-null  int64 
+ 11  capital.loss    32561 non-null  int64 
+ 12  hours.per.week  32561 non-null  int64 
+ 13  native.country  32561 non-null  object
+ 14  income          32561 non-null  object
+dtypes: int64(6), object(9)
+memory usage: 3.7+ MB
+None
+
+'?' Values details:
+ age                  0
+workclass         1836
+fnlwgt               0
+education            0
+education.num        0
+marital              0
+occupation        1843
+relationship         0
+race                 0
+sex                  0
+capital gain         0
+capital loss         0
+hours per week       0
+country            583
+income               0
+dtype: int64
+
+Encoded Data
+        workclass  education  marital  ...  race  sex  income
+1              2         11        6  ...     4    0       0
+3              2          5        0  ...     4    0       0
+4              2         15        5  ...     4    0       0
+5              2         11        0  ...     4    0       0
+6              2          0        5  ...     4    1       0
+...          ...        ...      ...  ...   ...  ...     ...
+32556          2         15        4  ...     4    1       0
+32557          2          7        2  ...     4    0       0
+32558          2         11        2  ...     4    1       1
+32559          2         11        6  ...     4    0       0
+32560          2         11        4  ...     4    1       0
+
+[30162 rows x 8 columns]
+Logistic Regression 0.7415109503717099
+'''
