@@ -1,0 +1,95 @@
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+
+#Reading Dataset
+features = pd.read_csv('dataset/walmart-recruiting-store-sales-forecasting/features.csv.zip')
+train = pd.read_csv('dataset/walmart-recruiting-store-sales-forecasting/train.csv.zip')
+test = pd.read_csv('dataset/walmart-recruiting-store-sales-forecasting/test.csv.zip')
+stores = pd.read_csv('dataset/walmart-recruiting-store-sales-forecasting/stores.csv')
+sample_submission = pd.read_csv('dataset/walmart-recruiting-store-sales-forecasting/sampleSubmission.csv.zip')
+# print("Dataset:\n",features,train,test,stores,sample_submission)
+
+
+# Extracting Necessary data for prediction
+train_final = train.merge(stores,
+                                how='inner', 
+                                on='Store')\
+                         .merge(features, 
+                                how='inner', 
+                                on=['Store', 'Date', 'IsHoliday'])
+
+test_final = test.merge(stores,
+                              how='inner',
+                              on='Store')\
+                       .merge(features,
+                              how='inner',
+                              on=['Store', 'Date', 'IsHoliday'])
+
+# Feature engineering
+train_final.Date = pd.to_datetime(train_final.Date)
+test_final.Date = pd.to_datetime(test_final.Date)
+
+storetype_values = {'A':3, 'B':2, 'C':1}
+train_final['Type'] = train_final.Type.map(storetype_values)
+test_final['Type'] = test_final.Type.map(storetype_values)
+
+train_final['Year']=train_final['Date'].dt.year
+train_final['Month']=train_final['Date'].dt.month
+train_final['Week']=train_final['Date'].dt.isocalendar().week
+train_final['Day']=train_final['Date'].dt.day
+
+test_final['Year']=test_final['Date'].dt.year
+test_final['Month']=test_final['Date'].dt.month
+test_final['Week']=test_final['Date'].dt.isocalendar().week
+test_final['Day']=test_final['Date'].dt.day
+
+#Missing Values
+# print("Missing Values in Train set:\n",train_final.isnull().sum())
+
+train_final.loc[train_final.MarkDown1.isnull() ,'MarkDown1']= 0
+train_final.loc[train_final.MarkDown2.isnull() ,'MarkDown2']= 0
+train_final.loc[train_final.MarkDown3.isnull() ,'MarkDown3']= 0
+train_final.loc[train_final.MarkDown4.isnull() ,'MarkDown4']= 0
+train_final.loc[train_final.MarkDown5.isnull() ,'MarkDown5']= 0
+# print(train_final.isnull().sum())
+
+#Removing -ve Values
+train_final = train_final[train_final.Weekly_Sales >= 0]
+# print(train_final.info(),test_final.info())
+
+#traning and testing
+X_train = train_final[['Store','Dept','IsHoliday','Size','Week','Type','Year']]
+Y_train = train_final['Weekly_Sales']
+RF = RandomForestRegressor(n_estimators=56, max_depth=25)
+RF.fit(X_train, Y_train)
+X_test = test_final[['Store', 'Dept', 'IsHoliday', 'Size', 'Week', 'Type', 'Year']]
+predict = RF.predict(X_test)
+sample_submission['Weekly_Sales'] = predict
+print("Prediction :\n",sample_submission.head(20))
+sample_submission.to_csv('submission.csv', index=False)
+
+# ---------------------------OUTPUT--------------------------------
+'''
+Prediction :
+                Id  Weekly_Sales
+0   1_1_2012-11-02  30193.873393
+1   1_1_2012-11-09  45851.026786
+2   1_1_2012-11-16   9253.160486
+3   1_1_2012-11-23  36944.186964
+4   1_1_2012-11-30  26746.857679
+5   1_1_2012-12-07   4852.893402
+6   1_1_2012-12-14  21643.232500
+7   1_1_2012-12-21  38965.351429
+8   1_1_2012-12-28  46547.621473
+9   1_1_2013-01-04  29034.969286
+10  1_1_2013-01-11  26169.333571
+11  1_1_2013-01-18   9494.891429
+12  1_1_2013-01-25  38797.205714
+13  1_1_2013-02-01  11881.358718
+14  1_1_2013-02-08   6899.436696
+15  1_1_2013-02-15   7724.855693
+16  1_1_2013-02-22  13238.650666
+17  1_1_2013-03-01   1482.429107
+18  1_1_2013-03-08   2992.050461
+19  1_1_2013-03-15   8037.840708
+'''
