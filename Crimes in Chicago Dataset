@@ -1,0 +1,192 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error
+
+# Reading cvs file
+df = pd.read_csv("dataset/Crimes in Chicago Dataset/Chicago_Crimes_2001_to_2004.csv",on_bad_lines='skip',low_memory=False)
+print("\nInformation of Dataset\n",df.info(),"\n----------------------------")
+print("\nDescription of Dataset\n",df.describe(),"\n----------------------------")
+
+# Printing Distinct Crimes in Chicago: 
+crimes = df['Primary Type'].unique()
+print("\nThe Number of distinct crimes in Chicago in the year 2001 to 2004:", len(crimes))
+print("\nThe Distinct Crimes are :\n", crimes)
+
+# -------------Dealing With Missing Values--------
+print("\nNumber of Missing Values in the whole dataset : ", df.isna().sum().sum())
+missing_values = list(df.isna().sum())
+
+cols = list(df.columns)
+col_final = []
+for i in range(len(cols)):
+    if (missing_values[i] == 0):
+        cols[i]="Others"
+d = dict(zip(cols, missing_values)) # making a dicionary for the missing values
+
+print("Number of Missing Values per feature >>")
+missing_vals = pd.DataFrame(d, index=["Missing Values"]) # Making a custom dataframe from dict d
+missing_vals.head()
+print("Number of Missing Values in the whole dataset : ", df.isna().sum().sum())
+
+# Plotting the missing values in the dataset
+x = list(d.keys())
+y = list(d.values())
+sns.barplot(x=x, y=y, palette="GnBu_d")
+plt.xticks(rotation=90)
+plt.title("Missing Values in the Dataset", fontdict = {'fontsize': 20})
+plt.ylabel("Count of missing values", fontdict={'fontsize': 15})
+plt.show()
+
+df = df.dropna()
+df.info()
+# print("\nNumber of Missing Values after removing: ", df.isna().sum().sum())
+
+# Encoding Features
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder()
+
+df['Case Number'] = le.fit_transform(df['Case Number'])
+df['Date'] = le.fit_transform(df['Date'])
+df['Block'] = le.fit_transform(df['Block'])
+df['Primary Type'] = le.fit_transform(df['Primary Type'])
+df['Description'] = le.fit_transform(df['Description'])
+df['Location Description'] = le.fit_transform(df['Location Description'])
+df['Arrest'] = le.fit_transform(df['Arrest'])
+df['Domestic'] = le.fit_transform(df['Domestic'])
+df['IUCR'] = le.fit_transform(df['IUCR'])
+df['FBI Code'] = le.fit_transform(df['FBI Code'])
+df['Latitude'] = le.fit_transform(df['Latitude'])
+df['Longitude'] = le.fit_transform(df['Longitude'])
+df['Updated On'] = le.fit_transform(df['Updated On'])
+df['Location'] = le.fit_transform(df['Location'])
+
+print("\nEncoded Dataset\n",df.head())
+
+x = df.iloc[:, 1:].values
+y = df.iloc[:, 0].values
+
+#Traning and Testing
+lr = LinearRegression()
+
+x_train,x_test,y_train,y_test= train_test_split(x,y,random_state=0,test_size=0.3)
+lr.fit(x_train,y_train)
+
+#Prediction and Error
+y_pred = lr.predict(x_test)
+er = mean_squared_error(y_test,y_pred,squared=False)
+print("\nLinear Regression (Mean Square Error):",er)
+
+
+# ------------------------------OUTPUT---------------------
+'''
+<class 'pandas.core.frame.DataFrame'>
+RangeIndex: 1923515 entries, 0 to 1923514
+Data columns (total 23 columns):
+ #   Column                Dtype  
+---  ------                -----  
+ 0   Unnamed: 0            int64  
+ 1   ID                    int64  
+ 2   Case Number           object 
+ 3   Date                  object 
+ 4   Block                 object 
+ 5   IUCR                  object 
+ 6   Primary Type          object 
+ 7   Description           object 
+ 8   Location Description  object 
+ 9   Arrest                bool   
+ 10  Domestic              bool   
+ 11  Beat                  int64  
+ 12  District              float64
+ 13  Ward                  float64
+ 14  Community Area        float64
+ 15  FBI Code              object 
+ 16  X Coordinate          float64
+ 17  Y Coordinate          object 
+ 18  Year                  float64
+ 19  Updated On            object 
+ 20  Latitude              object 
+ 21  Longitude             float64
+ 22  Location              object 
+dtypes: bool(2), float64(6), int64(3), object(12)
+memory usage: 311.8+ MB
+
+Information of Dataset
+ None 
+----------------------------
+
+Description of Dataset
+          Unnamed: 0            ID  ...          Year     Longitude
+count  1.923515e+06  1.923515e+06  ...  1.923515e+06  1.892823e+06
+mean   4.455517e+06  2.450314e+06  ...  2.002354e+03 -8.767167e+01
+std    6.692676e+05  7.662898e+05  ...  1.795053e+00  5.880068e-02
+min    8.790000e+02  6.340000e+02  ...  4.178983e+01 -9.168657e+01
+25%    3.931944e+06  1.819338e+06  ...  2.001000e+03 -8.771252e+01
+50%    4.475318e+06  2.414899e+06  ...  2.002000e+03 -8.766638e+01
+75%    4.957632e+06  3.017702e+06  ...  2.003000e+03 -8.762885e+01
+max    6.254041e+06  1.081375e+07  ...  2.004000e+03 -8.752453e+01
+
+[8 rows x 9 columns] 
+----------------------------
+
+The Number of distinct crimes in Chicago in the year 2001 to 2004: 31
+
+The Distinct Crimes are :
+ ['THEFT' 'OTHER OFFENSE' 'OFFENSE INVOLVING CHILDREN'
+ 'CRIM SEXUAL ASSAULT' 'MOTOR VEHICLE THEFT' 'SEX OFFENSE'
+ 'DECEPTIVE PRACTICE' 'BATTERY' 'BURGLARY' 'WEAPONS VIOLATION'
+ 'PUBLIC PEACE VIOLATION' 'NARCOTICS' 'GAMBLING' 'PROSTITUTION'
+ 'LIQUOR LAW VIOLATION' 'INTERFERENCE WITH PUBLIC OFFICER'
+ 'CRIMINAL DAMAGE' 'ASSAULT' 'STALKING' 'ARSON' 'CRIMINAL TRESPASS'
+ 'HOMICIDE' 'ROBBERY' 'OBSCENITY' 'KIDNAPPING' 'INTIMIDATION' 'RITUALISM'
+ 'DOMESTIC VIOLENCE' 'OTHER NARCOTIC VIOLATION' 'PUBLIC INDECENCY'
+ 'NON-CRIMINAL']
+
+Number of Missing Values in the whole dataset :  1553854
+Number of Missing Values per feature >>
+Number of Missing Values in the whole dataset :  1553854
+<class 'pandas.core.frame.DataFrame'>
+Int64Index: 1205641 entries, 1 to 1923514
+Data columns (total 23 columns):
+ #   Column                Non-Null Count    Dtype  
+---  ------                --------------    -----  
+ 0   Unnamed: 0            1205641 non-null  int64  
+ 1   ID                    1205641 non-null  int64  
+ 2   Case Number           1205641 non-null  object 
+ 3   Date                  1205641 non-null  object 
+ 4   Block                 1205641 non-null  object 
+ 5   IUCR                  1205641 non-null  object 
+ 6   Primary Type          1205641 non-null  object 
+ 7   Description           1205641 non-null  object 
+ 8   Location Description  1205641 non-null  object 
+ 9   Arrest                1205641 non-null  bool   
+ 10  Domestic              1205641 non-null  bool   
+ 11  Beat                  1205641 non-null  int64  
+ 12  District              1205641 non-null  float64
+ 13  Ward                  1205641 non-null  float64
+ 14  Community Area        1205641 non-null  float64
+ 15  FBI Code              1205641 non-null  object 
+ 16  X Coordinate          1205641 non-null  float64
+ 17  Y Coordinate          1205641 non-null  object 
+ 18  Year                  1205641 non-null  float64
+ 19  Updated On            1205641 non-null  object 
+ 20  Latitude              1205641 non-null  object 
+ 21  Longitude             1205641 non-null  float64
+ 22  Location              1205641 non-null  object 
+dtypes: bool(2), float64(6), int64(3), object(12)
+memory usage: 204.7+ MB
+
+Encoded Dataset
+    Unnamed: 0       ID  Case Number  ...  Latitude  Longitude  Location
+1        2544  4676906      1203974  ...    142200     253817    142270
+4        3302  4677901      1203971  ...     13630     257126     13633
+6        3756  4791194      1204059  ...     10525     297249     10526
+7        4502  4679521      1203914  ...     37890     222199     37901
+9        4904  4680124      1203977  ...    177646     105452    177721
+
+[5 rows x 23 columns]
+
+Linear Regression (Mean Square Error): 132224.73189652714
+'''
